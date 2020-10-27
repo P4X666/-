@@ -1,0 +1,70 @@
+<script>
+    (function (root) {
+        // console.log(root)
+        root.Codebase1 = function (x) {
+            this.uid = x
+        }
+
+        function test(params) {
+            console.log(params)
+        }
+        Codebase1.prototype.output = function (params) {
+            test(params)
+            this.uid += params
+            console.log(this.uid)
+            return this
+        }
+        Codebase1.prototype.$test = function (params) {
+            console.log(params)
+        }
+        return Codebase1
+    })(window);
+    let test1 = new Codebase1(1)
+    console.log(test1);
+
+
+        (Codebase2=function (x) {
+                this.uid = x
+
+                function test(params) {
+                    console.log(params)
+                }
+                this.output = function (params) {
+                    test(params)
+                    this.uid += params
+                    console.log(this.uid)
+                    return this
+                }
+                this.$test = function (params) {
+                    console.log(params)
+                }
+                return this
+        })()
+    let test2 = new Codebase2(1)
+    console.log(test2);
+
+    (Codebase3 = function (x) {
+                let uid = x
+                function getUid(){
+                    return uid
+                }
+                function test(params) {
+                    console.log(params)
+                }
+                function output(params) {
+                    test(params)
+                    uid += params
+                    console.log(uid)
+                }
+                function $test(params) {
+                    console.log(params)
+                }
+                return {
+                    $test,
+                    output,
+                    getUid
+                }
+            }())
+        let test3 = Codebase3
+        console.log(test3)
+</script>

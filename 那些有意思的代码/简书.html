@@ -1,0 +1,21 @@
+<script>
+
+    var customizeConsole = function (e) {
+        var t = e.title
+            , r = e.content
+            , n = e.backgroundColor
+            , a = [`%c ${e.title} %c  ${e.content} `, `padding: 1px; border-radius: 3px 0 0 3px; color: #fff; background: #606060 ;`, `padding: 1px; border-radius: 0 3px 3px 0; color: #fff; background: ${e.backgroundColor} ;`];
+        return function () {
+            var e;
+            window.console && "function" === typeof window.console.log && (e = console).log.apply(e, arguments)
+        }.apply(void 0, a)
+    };
+
+
+    customizeConsole({
+        title: "Environment",
+        content: "production",
+        backgroundColor: "#42c02e"
+    })
+
+</script>

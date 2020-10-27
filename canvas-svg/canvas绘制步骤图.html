@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>canvas绘制步骤图</title>
+    <style>
+        * {
+            padding: 0;
+            margin: 0;
+        }
+
+        #canvas-demo {
+            position: relative;
+            height: 300px;
+        }
+
+    </style>
+</head>
+
+<body>
+    <div id="canvas-demo">
+        <canvas id="myCanvas"></canvas>
+        <canvas id="myCanvas1" style="position: absolute; top: 0; left: 0;  z-index: 2;"></canvas>
+    </div>
+    <script>
+        // 设计数据格式
+        // status表示节点当前状态，-1表示未完成，0表示进行中，1表示已完成
+        let data1 = [
+            { nodeId: "001x", nodeName: "第一步", status: "0" },
+            { nodeId: "002x", nodeName: "第二步", status: "-1" },
+            { nodeId: "003x", nodeName: "第三步", status: "-1" }
+        ]
+        let data2 = [
+            { nodeId: "001x", nodeName: "第一步", status: "1" },
+            { nodeId: "002x", nodeName: "第二步", status: "0" },
+            { nodeId: "003x", nodeName: "第三步", status: "-1" }
+        ]
+        let data3 = [
+            { nodeId: "001x", nodeName: "第一步", status: "1" },
+            { nodeId: "002x", nodeName: "第二步", status: "1" },
+            { nodeId: "003x", nodeName: "第三步", status: "0" }
+        ]
+        let data4 = [
+            { nodeId: "001x", nodeName: "第一步", status: "1" },
+            { nodeId: "002x", nodeName: "第二步", status: "1" },
+            { nodeId: "003x", nodeName: "第三步", status: "1" }
+        ]
+    </script>
+
+    <script>
+        let canvasParent = document.getElementById('canvas-demo')
+
+        // canvas
+        let c = document.getElementById("myCanvas");
+        c.width = canvasParent.clientWidth
+        c.height = canvasParent.clientHeight
+        // 第二层canvas，用于制作动画以及放点击事件
+        let c_ani = document.getElementById("myCanvas1");
+        c_ani.height = canvasParent.clientHeight
+        c_ani.width = canvasParent.clientWidth
+        let context = c_ani.getContext("2d");
+
+        let ctx = c.getContext("2d");//{ alpha: false }如果将alpha的值设为false，则背景会变为黑色
+        let drawCanvasArr = []//---------存储绘制的节点
+        c_ani.addEventListener("click", function (e) {
+            clearCanvas(ctx, c)
+            drawCanvasArr.forEach(item => {
+                item.cb.apply(undefined, item.args)
+                if (item.nodeInfo) {
+                    let x, y;
+                    ({ x, y } = item.nodeInfo)
+                    // 矩形的宽高分别为200，100,当点击的坐标点x大于矩形的起点x并且小于矩形的终点x+200,y同理，那么即可判定
+                    // 点击后的坐标点在矩形节点上
+                    if ((e.layerX > x && e.layerX < x + 200) && (e.layerY > y && e.layerY < y + 100)) {
+                        console.log(item.nodeInfo.id)
+                    }
+                }
+            })
+        });
+        let timer = null
+        let AnimationFrame
+        function renderCanvasDemo(data) {
+
+            if (data.length > 0) {
+                renderCircle(100, 150, "#FFA500", { text: "开始", x: 100, y: 150 })
+
+                drawCanvasArr.push({ cb: renderCircle, args: [100, 150, "#FFA500", { text: "开始", x: 100, y: 150 }] })
+                let len = data.length
+                let pre = { x: 150, y: 100 }//保存开始节点的最右侧点的坐标
+                if (timer) {
+                    cancelAnimationFrame(AnimationFrame)
+                    clearInterval(timer)
+                    clearCanvas(context, c_ani)
+                }
+                for (let i = 0; i < len; i++) {
+                    let x = pre.x, y = 150;
+                    renderLine({ x, y }, { x: x + 100, y: y }, "gray")
+                    
+                    let f_color = data[i].status > 0 ? "green" : "#FFA500"
+                    renderRect(x + 100, y - 50, f_color, { text: data[i].nodeName, x: x + 200, y, fillColor: '#000' })
+                    if (data[i].status == "0") {
+                        AnimationFrame = requestAnimationFrame(canvasAnimation(x + 100, y - 50, "rgba(255,0,0,0.2)", true))
+                    }
+
+                    pre.x += 300;
+                    drawCanvasArr.push(
+                        { cb: renderLine, args: [{ x, y }, { x: x + 100, y }, "gray"] },
+                        {
+                            cb: renderRect, args: [x + 100, 100, f_color, { text: data[i].nodeName, x: x + 200, y, fillColor: '#000' }],
+                            nodeInfo: { id: data[i].nodeId, x: x + 100, y: 100 }
+                        }
+                    )
+                }
+                let x = pre.x
+                renderLine({ x, y: 150 }, { x: x + 100, y: 150 }, "gray")
+                renderCircle(x + 150, 150, "#FFA500", { text: "结束", x: x + 150, y: 150 })
+
+                drawCanvasArr.push(
+                    { cb: renderLine, args: [{ x, y: 150 }, { x: x + 100, y: 150 }, "gray"] },
+                    { cb: renderCircle, args: [x + 150, 150, "#FFA500", { text: "结束", x: x + 150, y: 150 }] }
+                )
+            } else {
+                console.error("错误处理或者给用户提示")
+            }
+        }
+
+        //绘制圆形
+        function renderCircle(x, y, fillColor, lable) {
+            ctx.fillStyle = fillColor || "#FFA500";
+            ctx.strokeStyle = fillColor || "#FFA500";
+            ctx.beginPath();
+            ctx.arc(x, y, 50, 0, 2 * Math.PI);
+            ctx.fill();
+            ctx.closePath();
+            ctx.stroke();
+            fillText(lable.text, lable.x, lable.y)
+        }
+
+        // 绘制矩形 
+        function renderRect(x, y, fillColor, lable) {
+            let width = 200, height = 100;
+            ctx.fillStyle = fillColor || "#fff";
+            ctx.strokeStyle = "#000";
+            ctx.beginPath();
+            ctx.fillRect(x, y, width, height)
+            ctx.stroke();
+            fillText(lable.text, lable.x, lable.y, lable.fillColor)
+        }
+
+        // 绘制连线
+        function renderLine(from, to, fillColor) {
+            ctx.strokeStyle = '#000'//控制线段的颜色
+            ctx.lineWidth = 1
+            ctx.beginPath();
+            ctx.moveTo(from.x, from.y);
+            ctx.lineTo(to.x, to.y);
+            ctx.stroke();
+        }
+
+        // 文本填充
+        function fillText(text, x, y, fillColor) {
+            ctx.font = "16px Arial";
+            ctx.textAlign = "center"
+            ctx.fillStyle = fillColor || "white"
+            ctx.fillText(text, x, y);
+        }
+        // 
+        function clearCanvas(ctx, el) {
+            ctx.clearRect(0, 0, el.width, el.height);
+        }
+
+        // 第二层canvas，用于制作动画
+
+        function canvasAnimationMask(x, y, fillColor) {
+            let width = 50, height = 100;
+            context.fillStyle = fillColor
+            context.beginPath();
+            context.fillRect(x, y, width, height)
+            context.stroke();
+        }
+
+        function canvasAnimation(x, y, fillColor, condition) {
+            let end = x + 200, start = x;
+            return function () {
+                if (condition) {
+                    timer = setInterval(() => {
+
+                        clearCanvas(context, c_ani)
+                        canvasAnimationMask(start, y, fillColor)
+                        if (start == end - 50) {
+                            start = end - 200
+                        } else {
+                            start += 50
+                        }
+
+                        // console.log(start)
+                    }, 500);
+                }
+            }
+
+        }
+
+        renderCanvasDemo(data1)
+        setTimeout(() => renderCanvasDemo(data2), 6000)
+        setTimeout(() => renderCanvasDemo(data3), 12000)
+        setTimeout(() => renderCanvasDemo(data4), 18000)
+    </script>
+
+</body>
+
+</html>

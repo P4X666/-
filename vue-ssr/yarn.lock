@@ -5162,6 +5162,11 @@ lodash.memoize@^4.1.2:
   resolved "https://registry.npm.taobao.org/lodash.memoize/download/lodash.memoize-4.1.2.tgz?cache=0&sync_timestamp=1589682725270&other_urls=https%3A%2F%2Fregistry.npm.taobao.org%2Flodash.memoize%2Fdownload%2Flodash.memoize-4.1.2.tgz#bcc6c49a42a2840ed997f323eada5ecd182e0bfe"
   integrity sha1-vMbEmkKihA7Zl/Mj6tpezRguC/4=
 
+lodash.merge@^4.6.2:
+  version "4.6.2"
+  resolved "https://registry.yarnpkg.com/lodash.merge/-/lodash.merge-4.6.2.tgz#558aa53b43b661e1925a0afdfa36a9a1085fe57a"
+  integrity sha512-0KpjqXRVvrYyCsX1swR/XTK0va6VQkQM6MNo7PqW77ByjAhoARA8EfrP1N4+KlKj8YS0ZUCtRT/YUuhyYDujIQ==
+
 lodash.template@^4.5.0:
   version "4.5.0"
   resolved "https://registry.yarnpkg.com/lodash.template/-/lodash.template-4.5.0.tgz#f976195cf3f347d0d5f52483569fe8031ccce8ab"
@@ -8312,6 +8317,11 @@ webpack-merge@^4.2.2:
   integrity sha1-onxS6ng9E5iv0gh/VH17nS9DY00=
   dependencies:
     lodash "^4.17.15"
+
+webpack-node-externals@^2.5.2:
+  version "2.5.2"
+  resolved "https://registry.yarnpkg.com/webpack-node-externals/-/webpack-node-externals-2.5.2.tgz#178e017a24fec6015bc9e672c77958a6afac861d"
+  integrity sha512-aHdl/y2N7PW2Sx7K+r3AxpJO+aDMcYzMQd60Qxefq3+EwhewSbTBqNumOsCE1JsCUNoyfGj5465N0sSf6hc/5w==
 
 webpack-sources@^1.1.0, webpack-sources@^1.4.0, webpack-sources@^1.4.1, webpack-sources@^1.4.3:
   version "1.4.3"

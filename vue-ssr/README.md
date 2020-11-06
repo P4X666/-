@@ -39,4 +39,7 @@ entry-client.js
 #### webpack打包
 将文件打包成两个部分
 
+#### 安装打包脚本
+打包脚本需要跨平台 使用cross-env
+
 

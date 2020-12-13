@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>回到页面顶部的几种方式</title>
+    <style>
+        .test1 div{
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 20vh;
+            margin-bottom: 10px;
+            background-color: aqua;
+        }
+    </style>
+</head>
+<body>
+     <!-- 第一种 使用a标签锚点 -->
+    <div class="test1">
+        <a name="topAnchor"></a>
+        <div>我是顶部</div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+    </div>
+    <button id="backTop">回到顶部</button>
+</body>
+<script>
+    /**
+    *   起因：页面中有几个必填项，如果用户没填则直接定位到该位置
+    *   现总结一下几种方法
+    */
+    let backTop=document.getElementById("backTop")
+    backTop.addEventListener("click",function(e){
+        // 第一种方式
+        let a=document.createElement("a")
+        a.href="#topAnchor"
+        e.target.appendChild(a)
+        a.onclick=function(e){
+            e.stopPropagation()
+            console.log(a)
+        }
+        a.click()
+        e.target.removeChild(a)
+    })
+</script>
+</html>

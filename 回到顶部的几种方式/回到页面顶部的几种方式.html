@@ -1,50 +1,85 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>回到页面顶部的几种方式</title>
     <style>
-        .test1 div{
+        .test1 div {
             display: flex;
             align-items: center;
             justify-content: center;
-            height: 20vh;
+            height: 19vh;
             margin-bottom: 10px;
             background-color: aqua;
         }
+
+        footer {
+            line-height: 120px;
+            text-align: center;
+        }
     </style>
 </head>
+
 <body>
-     <!-- 第一种 使用a标签锚点 -->
+    <!-- 第一种 使用a标签锚点 -->
     <div class="test1">
         <a name="topAnchor"></a>
-        <div>我是顶部</div>
+        <div id="top">我是顶部</div>
         <div></div>
         <div></div>
         <div></div>
         <div></div>
         <div></div>
     </div>
-    <button id="backTop">回到顶部</button>
+    <footer>
+        <button id="backTop1">第一种方式回到顶部</button>
+        <button id="backTop2">第二种方式回到顶部</button>
+        <button id="backTop3">第三种方式回到顶部</button>
+    </footer>
 </body>
 <script>
     /**
     *   起因：页面中有几个必填项，如果用户没填则直接定位到该位置
     *   现总结一下几种方法
     */
-    let backTop=document.getElementById("backTop")
-    backTop.addEventListener("click",function(e){
-        // 第一种方式
-        let a=document.createElement("a")
-        a.href="#topAnchor"
+
+    // 第一种方式 借助 a 标签
+    const backTop1 = document.getElementById("backTop1")
+
+    backTop1.addEventListener("click", function (e) {
+
+        let a = document.createElement("a")
+        a.href = "#topAnchor"
         e.target.appendChild(a)
-        a.onclick=function(e){
+        a.onclick = function (e) {
             e.stopPropagation()
             console.log(a)
         }
         a.click()
         e.target.removeChild(a)
     })
+    /**
+    *   第二种方式  借助 Element.scrollIntoView() API
+    *   一般为了动画效果，通常会加上 {behavior: "smooth"}，让动画更加流畅
+    */
+    const backTop2 = document.getElementById("backTop2")
+    const TOP = document.getElementById("top")
+    backTop2.addEventListener("click", function (e) {
+        TOP.scrollIntoView({ behavior: "smooth" })
+    })
+    /**
+    *  第三种方式 借助 scrollTo() API
+    *  需要传递 DOM 坐标，此例子仅展示简单demo，只考虑 y 坐标
+    */
+    const y = TOP.offsetTop
+    const backTop3 = document.getElementById("backTop3")
+    backTop3.addEventListener("click", function (e) {
+        // window.scrollTo({ top: y, left: 0, behavior: 'smooth' })
+        top.scrollTo({ top: y, left: 0, behavior: 'smooth' })
+    })
+
 </script>
+
 </html>

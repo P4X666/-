@@ -73,11 +73,13 @@
     *  第三种方式 借助 scrollTo() API
     *  需要传递 DOM 坐标，此例子仅展示简单demo，只考虑 y 坐标
     */
+   function scrollHandle(){
+        window.scrollTo({ top: y, left: 0, behavior: 'smooth' })
+   }
     const y = TOP.offsetTop
     const backTop3 = document.getElementById("backTop3")
     backTop3.addEventListener("click", function (e) {
-        // window.scrollTo({ top: y, left: 0, behavior: 'smooth' })
-        top.scrollTo({ top: y, left: 0, behavior: 'smooth' })
+        window.scrollTo({ top: y, left: 0, behavior: 'smooth' })
     })
 
 </script>

@@ -6,6 +6,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>回到页面顶部的几种方式</title>
     <style>
+        html,
+        body {
+            scroll-behavior: smooth;
+        }
+
         .test1 div {
             display: flex;
             align-items: center;
@@ -36,6 +41,7 @@
         <button id="backTop1">第一种方式回到顶部</button>
         <button id="backTop2">第二种方式回到顶部</button>
         <button id="backTop3">第三种方式回到顶部</button>
+        <button id="backTop4">通用的方式</button>
     </footer>
 </body>
 <script>
@@ -59,28 +65,64 @@
         a.click()
         e.target.removeChild(a)
     })
+
     /**
-    *   第二种方式  借助 Element.scrollIntoView() API
-    *   一般为了动画效果，通常会加上 {behavior: "smooth"}，让动画更加流畅
-    */
-    const backTop2 = document.getElementById("backTop2")
-    const TOP = document.getElementById("top")
-    backTop2.addEventListener("click", function (e) {
-        TOP.scrollIntoView({ behavior: "smooth" })
-    })
-    /**
-    *  第三种方式 借助 scrollTo() API
+    *  第二种方式 借助 scrollTo() API
+    *  一般为了动画效果，通常会加上 {behavior: "smooth"}，让动画更加流畅
     *  需要传递 DOM 坐标，此例子仅展示简单demo，只考虑 y 坐标
     */
-   function scrollHandle(){
+    function scrollHandle() {
         window.scrollTo({ top: y, left: 0, behavior: 'smooth' })
-   }
+    }
+
+    const TOP = document.getElementById("top")
     const y = TOP.offsetTop
-    const backTop3 = document.getElementById("backTop3")
-    backTop3.addEventListener("click", function (e) {
+    const backTop2 = document.getElementById("backTop2")
+    backTop2.addEventListener("click", function (e) {
         window.scrollTo({ top: y, left: 0, behavior: 'smooth' })
     })
+    /**
+    *   第三种方式  借助 Element.scrollIntoView() API
+    *   加上 {behavior: "smooth"}，让动画更加流畅
+    */
+    const backTop3 = document.getElementById("backTop3")
+    backTop3.addEventListener("click", function (e) {
+        TOP.scrollIntoView({ behavior: "smooth" })
+    })
 
+    /**
+    *   关于 behavior 参数 ie firefox 不兼容的问题
+    */
+    const backTop4 = document.getElementById("backTop4")
+    backTop4.addEventListener("click", function (e) {
+        up()
+    })
+    const distance=70;// 滚动条每次滚动的距离
+// 回到页面底部
+    function down(){
+        const height = document.body.scrollHeight;
+        let   start = document.documentElement.scrollTop;
+        function godown() {
+            scrollTo(start, start + distance)
+            start = start + distance
+            if (start < height){
+                window.requestAnimationFrame(godown)
+            }
+        }
+        window.requestAnimationFrame(godown)
+    }
+// 回到页面顶部
+    function up(){
+        let  start = document.documentElement.scrollTop;
+        function gotop() {
+            scrollTo(0, start - distance)
+            start = start - distance
+            if (start >0 ){
+                window.requestAnimationFrame(gotop)
+            }
+        }
+        window.requestAnimationFrame(gotop)
+    }
 </script>
 
 </html>

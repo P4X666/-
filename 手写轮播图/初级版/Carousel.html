@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>轮播图练习</title>
+    <link rel="stylesheet" href="./Carousel.css" />
+    <script src="./Carousel.js"></script>
+</head>
+<style>
+    #container {
+        position: relative;
+        margin-left: calc(50% - 250px);
+    }
+
+    li.item {
+        transition: all 0.8s;
+    }
+
+    li.active {
+        background-color: coral;
+    }
+    .button{
+        display: flex;
+        justify-content: space-between;
+        position: absolute;
+        top: 200px;
+        z-index: 5;
+        width: 500px;
+    }
+    .button div{
+        width: 25px;
+        height: 25px;
+        border-radius: 100%;
+    }
+    .button .next{
+        background-color: coral;
+    }
+    .button .pre{
+        background-color: darkcyan;
+    }
+    /* ::before{
+        content: "\e6e0";
+    } */
+</style>
+
+<body>
+
+    <div id="container">
+        <div class="button">
+            <div class="pre"></div>
+            <div class="next"></div>
+        </div>
+        <ul class="list">
+            <li class="item">0<img src="../img1.image"></li>
+            <li class="item">1<img src="../img2.image"></li>
+            <li class="item">2<img src="../img3.image"></li>
+            <li class="item">3<img src="../img4.image"></li>
+        </ul>
+        <ul class="dots">
+            <li attr="0" class="active"></li>
+            <li attr="1"></li>
+            <li attr="2"></li>
+            <li attr="3"></li>
+        </ul>
+    </div>
+    <script>
+        const interval = 2000 //时间间隔
+        let intervalId=null //定时器
+        // 父盒子
+        const container = document.querySelector("#container")
+        // 图片集合
+        const lists = document.querySelector(".list")
+        const listItem = Array.from(lists.children)
+        // 圆点集合
+        const dots = document.querySelector(".dots")
+        const dot = Array.from(dots.children)
+        // 前后按钮集合
+        const button = document.querySelector(".button")
+        let current=0,max=listItem.length
+
+        // 存储圆点的状态
+        const dotSelect={
+            preDot:dot[0],
+            currentDot:dot[0]
+        }
+        // 当鼠标悬停在父盒子上时，停止动画
+        container.addEventListener("mouseover",function(e){
+            removeAnima()
+        })
+        // 当鼠标悬停在父盒子上时，开始动画
+        container.addEventListener("mouseout",function(e){
+            autoRunning() 
+        })
+
+
+        // 监听白点的点击事件
+        dots.addEventListener("click", function (e) {
+            const dot = e.target
+            if (dot.tagName === "LI") {
+                // const li = listItem[dot.attributes[0].value]
+                removeAnima()
+                let value=dot.attributes[0].value
+                if(value>current){
+                    current=value-1
+                    goNext()
+                }else{
+                    current=value+1
+                    goPre()
+                }
+                console.log(value,current)
+            }
+        })
+
+
+        button.addEventListener("click", function (e) {
+            const target = e.target
+            if(target.className=="next"){
+                // 到下一页
+                goNext()
+            }
+            if(target.className=="pre"){
+                // 到上一页
+                goPre()
+            }
+            console.log(current,max)
+        })
+        function goNext() {
+            
+            current++
+            if(current>=max){
+                current=0
+            }
+            for (let i = 0; i < max; i++) {
+                const element = listItem[i];
+                const left=-current*500
+                element.style.transform=`translateX(${left}px)`;
+            }
+            handleDot(current)
+        }
+
+        function goPre() {
+            current--
+            if(current<0){
+                current=max-1
+            }
+            for (let i = 0; i < max; i++) {
+                const element = listItem[i];
+                const left=-current*500
+                element.style.transform=`translateX(${left}px)`;
+            }
+            handleDot(current)
+        }
+        function handleDot(current) {
+            dotSelect.preDot=dotSelect.currentDot
+            dotSelect.currentDot=dot[current]
+            dotSelect.currentDot.className="active"
+            dotSelect.preDot.className=""
+        }
+        function removeAnima(){
+            clearInterval(intervalId)
+            intervalId=null
+        }
+        function autoRunning() {
+            intervalId=setInterval(() => {
+                goNext()
+            }, interval);
+        }
+        autoRunning() 
+    </script>
+</body>
+
+</html>

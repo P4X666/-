@@ -1,0 +1,35 @@
+*,body,ul{
+    padding: 0;
+    margin: 0;
+}
+ul{
+    display: flex;
+    overflow: hidden;
+}
+li{
+    list-style: none;
+}
+li img{
+    width: 500px;
+    height:400px;
+}
+.list {
+    width: 500px;
+    text-align: center;
+}
+
+.dots {
+    position: absolute;
+    bottom: 15px;
+    display: flex;
+    justify-content: center;
+    width: 500px;
+}
+
+.dots li {
+    width: 15px;
+    height: 15px;
+    margin-left: 10px;
+    border-radius: 100%;
+    background-color: #fff;
+}

@@ -5,7 +5,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>轮播图练习</title>
-    <link rel="stylesheet" href="../elementUi.css">
     <link rel="stylesheet" href="./Carousel.css" />
     <script src="./Carousel.js"></script>
 </head>
@@ -17,7 +16,7 @@
             <div class="pre"></div>
             <div class="next"></div>
         </div>
-        <ul class="list animation" style="height: 400px;">
+        <ul class="list" style="height: 400px;">
             <li>0<img src="../img1.image"></li>
             <li>1<img src="../img2.image"></li>
             <li>2<img src="../img3.image"></li>
@@ -31,9 +30,12 @@
         </ul>
     </div>
     <script>
+        /**
+        *   中级版相较于初级版，运行动画更加的流畅
+        **/
         const interval = 2000 //时间间隔
         const width = 500// 轮播图的宽度
-        let intervalId=null //  定时器
+        let intervalId = null //  定时器
         // 图片集合
         const lists = document.querySelector(".list")
         const listItem = Array.from(lists.children)
@@ -49,8 +51,7 @@
             currentDot: dot[0]
         }
         let timeOut = null
-        const animationInOrder = [max - 1, 0] // 初始化 拥有动画的两个节点
-        const listOrder = [] // 节点位置的映射
+        const animationInOrder = [max - 1, 0] // 初始化 拥有动画的三个节点
         // li 预处理
         const half = max / 2
         pretreatment()
@@ -61,7 +62,6 @@
 
             for (let i = 0; i < max; i++) {
                 const item = listItem[i];
-                listOrder.push(i)
                 // 以第一个元素为中心对称 右侧为正的，左侧为负的
                 let left = i > half ? (i - max) * width : i * width
                 if (i == 0) {
@@ -75,8 +75,14 @@
                 item.style.transform = `translateX(${left}px)`
                 item.classList.add("el-carousel__item")
             }
+            // handleAnimation()
         }
-
+        function handleAnimation() {
+            listItem[animationInOrder[0]].classList.add("is-animating")
+            listItem[animationInOrder[1]].classList.add("is-active")
+            listItem[animationInOrder[1]].classList.add("is-animating")
+            listItem[animationInOrder[2]].classList.add("is-animating")
+        }
         button.addEventListener("click", function (e) {
 
             const target = e.target
@@ -89,96 +95,115 @@
                 goPre()
             }
         })
-        
-        function goNext() {
+
+        function goNext(cur) {
             current++
             if (current == max) {
                 current = 0
             }
-            handleLi(current, true)
+            if (animationInOrder.includes(current)) {
+                listItem[current].classList.add("is-active")
+                listItem[animationInOrder[0]].classList.remove("is-active")
+            } else {
+                const pre_preLi = animationInOrder.shift()
+                const preLi = animationInOrder[0]
+                listItem[current].classList.add("is-active")
+                listItem[current].classList.add("is-animating")
+                listItem[pre_preLi].classList.remove("is-animating")
+                listItem[preLi].classList.remove("is-active")
+
+                animationInOrder.push(current)
+            }
+            for (let i = 0; i < max; i++) {
+                let left = parseInt(listItem[i].style.transform.split("translateX(")[1])
+
+                left = left - width
+                if (left < -half * width) {
+                    left = -left - half * width
+                }
+
+                listItem[i].style.transform = `translateX(${left}px)`
+            }
             handleDot(current)
+
+            if (cur && current < cur) {
+                goNext(cur)
+            }
         }
 
-        function goPre() {
+        function goPre(cur) {
             current--
             if (current < 0) {
                 current = max - 1
             }
-            handleLi(current, false)
-            handleDot(current)
-        }
-
-        function handleLi(current, isNext) {
-            // 处理节点的class
-            if (isNext) {
-                if (current == 0 && animationInOrder[1] == 0) {// 判断是不是在第一个和最后一个的交界处
-                    const preLi = animationInOrder[0]
-                    listItem[preLi].classList.remove("is-active")
-                    listItem[current].classList.add("is-active")
-                } else {
-                    const pre_preLi = animationInOrder.shift()
-                    const preLi = animationInOrder[0]
-
-                    listItem[pre_preLi].classList.remove("is-animating")
-                    listItem[preLi].classList.remove("is-active")
-                    listItem[current].classList.add("is-active")
-                    listItem[current].classList.add("is-animating")
-
-                    animationInOrder.push(current)
-                }
-
-                const showNode = listOrder.shift()
-                listOrder.push(showNode)
+            if (animationInOrder.includes(current)) {
+                listItem[current].classList.add("is-active")
+                listItem[animationInOrder[1]].classList.remove("is-active")
             } else {
-                if (current == max - 1 && animationInOrder[1] == 0) {// 判断是不是在第一个和最后一个的交界处
-                    const preLi = animationInOrder[1]
-                    listItem[preLi].classList.remove("is-active")
-                    listItem[current].classList.add("is-active")
-                } else {
-                    const pre_preLi = animationInOrder.pop()
-                    const preLi = animationInOrder[0]
-                    listItem[pre_preLi].classList.remove("is-animating")
-                    listItem[preLi].classList.remove("is-active")
-                    listItem[current].classList.add("is-active")
-                    listItem[current].classList.add("is-animating")
-                    animationInOrder.unshift(current)
-                }
+                const pre_preLi = animationInOrder.pop()
+                const preLi = animationInOrder[0]
+                listItem[current].classList.add("is-active")
+                listItem[current].classList.add("is-animating")
+                listItem[pre_preLi].classList.remove("is-animating")
+                listItem[preLi].classList.remove("is-active")
 
-                const showNode = listOrder.pop()
-                listOrder.unshift(showNode)
+                animationInOrder.unshift(current)
             }
-            translateLi()
-        }
-        // 处理节点的 translateX ， listOrder 的第一个永远是显示的那一个节点
-        function translateLi() {
             for (let i = 0; i < max; i++) {
-                let left = i > half ? (i - max) * width : i * width
-                listItem[listOrder[i]].style.transform = `translateX(${left}px)`
+                let left = parseInt(listItem[i].style.transform.split("translateX(")[1])
+
+                left = left + width
+                if (left > half * width) {
+                    left = half * width - left
+                }
+                listItem[i].style.transform = `translateX(${left}px)`
+            }
+
+            handleDot(current)
+            if (cur && current > cur) {
+                goPre(cur)
             }
         }
+
         function handleDot(current) {
-            current = current % 4
+            current = current % max
             dotSelect.preDot = dotSelect.currentDot
             dotSelect.currentDot = dot[current]
             dotSelect.currentDot.className = "active"
             dotSelect.preDot.className = ""
         }
+
+        // 监听白点的点击事件
+        dots.addEventListener("click", function (e) {
+            const dot = e.target
+            if (dot.tagName === "LI") {
+                let value = dot.attributes[0].value
+                value = +value
+
+                if (value > current) {
+                    goNext(value)
+                } else {
+                    goPre(value)
+                }
+            }
+        })
+
         function autoPlay() {
-            if(intervalId){
+            if (intervalId) {
                 removeAnima()
             }
-            intervalId=setInterval(() => {
+            intervalId = setInterval(() => {
                 goNext()
             }, interval);
         }
-        autoPlay() 
+        // autoPlay() 
 
 
-        function removeAnima(){
+        function removeAnima() {
             clearInterval(intervalId)
-            intervalId=null
+            intervalId = null
         }
-        const container=document.querySelector("#container")
+        const container = document.querySelector("#container")
         // 当鼠标悬停在父盒子上时，停止动画
         container.addEventListener("mouseover",function(e){
             removeAnima()

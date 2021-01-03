@@ -13,9 +13,7 @@ ul{
     display: flex;
     
 }
-.animation{
-    transition: all 0.8s;
-}
+
 .list {
     width: 500px;
     text-align: center;
@@ -65,4 +63,26 @@ li img{
 }
 li.active{
     background-color: coral;
+}
+
+.el-carousel__item.is-animating {
+    -webkit-transition: -webkit-transform .4s ease-in-out;
+    transition: -webkit-transform .4s ease-in-out;
+    transition: transform .4s ease-in-out;
+    transition: transform .4s ease-in-out,-webkit-transform .4s ease-in-out
+}
+.el-carousel__item.is-active {
+    z-index: 2
+}
+.el-carousel__item {
+    width: 100%;
+    display: inline-block;
+    overflow: hidden;
+    z-index: 0
+}
+.el-carousel__item {
+    height: 100%;
+    top: 0;
+    left: 0;
+    position: absolute
 }

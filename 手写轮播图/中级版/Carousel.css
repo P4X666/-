@@ -13,7 +13,9 @@ ul{
     display: flex;
     
 }
-
+.is-animating{
+    transition: all 0.8s;
+}
 .list {
     width: 500px;
     text-align: center;
@@ -75,14 +77,10 @@ li.active{
     z-index: 2
 }
 .el-carousel__item {
-    width: 100%;
     display: inline-block;
-    overflow: hidden;
-    z-index: 0
+    height: 100%;
+    width: 100%;
 }
 .el-carousel__item {
     height: 100%;
-    top: 0;
-    left: 0;
-    position: absolute
 }

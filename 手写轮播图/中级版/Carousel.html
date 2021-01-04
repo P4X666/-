@@ -16,7 +16,7 @@
             <div class="pre"></div>
             <div class="next"></div>
         </div>
-        <ul class="list" style="height: 400px;">
+        <ul class="list is-animating" style="height: 400px;">
             <li>0<img src="../img1.image"></li>
             <li>1<img src="../img2.image"></li>
             <li>2<img src="../img3.image"></li>
@@ -51,38 +51,17 @@
             currentDot: dot[0]
         }
         let timeOut = null
-        const animationInOrder = [max - 1, 0] // 初始化 拥有动画的三个节点
         // li 预处理
         const half = max / 2
-        pretreatment()
         /**
         *   轮播图的状态初始化
         **/
-        function pretreatment() {
-
-            for (let i = 0; i < max; i++) {
-                const item = listItem[i];
-                // 以第一个元素为中心对称 右侧为正的，左侧为负的
-                let left = i > half ? (i - max) * width : i * width
-                if (i == 0) {
-                    item.classList.add("is-active")
-                    item.classList.add("is-animating")
-                }
-
-                if (i == max - 1) {
-                    item.classList.add("is-animating")
-                }
-                item.style.transform = `translateX(${left}px)`
-                item.classList.add("el-carousel__item")
-            }
-            // handleAnimation()
+        initLi()
+        function initLi() {
+            const li=listItem[0].cloneNode(true)
+            lists.appendChild(li)
         }
-        function handleAnimation() {
-            listItem[animationInOrder[0]].classList.add("is-animating")
-            listItem[animationInOrder[1]].classList.add("is-active")
-            listItem[animationInOrder[1]].classList.add("is-animating")
-            listItem[animationInOrder[2]].classList.add("is-animating")
-        }
+
         button.addEventListener("click", function (e) {
 
             const target = e.target
@@ -98,77 +77,53 @@
 
         function goNext(cur) {
             current++
-            if (current == max) {
-                current = 0
+            if(current>max){
+                current=1
+                lists.classList.remove("is-animating")
+                lists.style.transform=`translateX(${0}px)`;
+                // ------------------     css动画 实际上是宏任务            ------------------------------
+                // Promise.resolve().then(()=>{
+                //     lists.classList.add("is-animating")
+                //     translate(current)
+                //     handleDot(current)
+                // })
+                setTimeout(()=>{
+                    lists.classList.add("is-animating")
+                    translate(current)
+                    handleDot(current)
+                },0)
+                
+                return
             }
-            if (animationInOrder.includes(current)) {
-                listItem[current].classList.add("is-active")
-                listItem[animationInOrder[0]].classList.remove("is-active")
-            } else {
-                const pre_preLi = animationInOrder.shift()
-                const preLi = animationInOrder[0]
-                listItem[current].classList.add("is-active")
-                listItem[current].classList.add("is-animating")
-                listItem[pre_preLi].classList.remove("is-animating")
-                listItem[preLi].classList.remove("is-active")
-
-                animationInOrder.push(current)
-            }
-            for (let i = 0; i < max; i++) {
-                let left = parseInt(listItem[i].style.transform.split("translateX(")[1])
-
-                left = left - width
-                if (left < -half * width) {
-                    left = -left - half * width
-                }
-
-                listItem[i].style.transform = `translateX(${left}px)`
-            }
+            translate(current)
             handleDot(current)
-
-            if (cur && current < cur) {
-                goNext(cur)
-            }
         }
 
         function goPre(cur) {
             current--
-            if (current < 0) {
-                current = max - 1
-            }
-            if (animationInOrder.includes(current)) {
-                listItem[current].classList.add("is-active")
-                listItem[animationInOrder[1]].classList.remove("is-active")
-            } else {
-                const pre_preLi = animationInOrder.pop()
-                const preLi = animationInOrder[0]
-                listItem[current].classList.add("is-active")
-                listItem[current].classList.add("is-animating")
-                listItem[pre_preLi].classList.remove("is-animating")
-                listItem[preLi].classList.remove("is-active")
+            if(current<0){
+                current=max-1
+                lists.classList.remove("is-animating")
+                lists.style.transform=`translateX(${-max*width}px)`;
 
-                animationInOrder.unshift(current)
+                setTimeout(()=>{
+                    lists.classList.add("is-animating")
+                    translate(current)
+                    handleDot(current)
+                },0)
+                return
             }
-            for (let i = 0; i < max; i++) {
-                let left = parseInt(listItem[i].style.transform.split("translateX(")[1])
-
-                left = left + width
-                if (left > half * width) {
-                    left = half * width - left
-                }
-                listItem[i].style.transform = `translateX(${left}px)`
-            }
-
+            translate(current)
             handleDot(current)
-            if (cur && current > cur) {
-                goPre(cur)
-            }
         }
-
-        function handleDot(current) {
-            current = current % max
+        function translate(current) {
+            const left=-current*500
+            lists.style.transform=`translateX(${left}px)`;
+        }
+        function handleDot(cur) {
+            cur = cur % max
             dotSelect.preDot = dotSelect.currentDot
-            dotSelect.currentDot = dot[current]
+            dotSelect.currentDot = dot[cur]
             dotSelect.currentDot.className = "active"
             dotSelect.preDot.className = ""
         }
@@ -179,12 +134,9 @@
             if (dot.tagName === "LI") {
                 let value = dot.attributes[0].value
                 value = +value
-
-                if (value > current) {
-                    goNext(value)
-                } else {
-                    goPre(value)
-                }
+                current=value
+                translate(current)
+                handleDot(value)
             }
         })
 
@@ -196,7 +148,7 @@
                 goNext()
             }, interval);
         }
-        // autoPlay() 
+        autoPlay() 
 
 
         function removeAnima() {
@@ -204,11 +156,11 @@
             intervalId = null
         }
         const container = document.querySelector("#container")
-        // 当鼠标悬停在父盒子上时，停止动画
+        //  // 当鼠标悬停在父盒子上时，停止动画
         container.addEventListener("mouseover",function(e){
             removeAnima()
         })
-        // 当鼠标悬停在父盒子上时，开始动画
+        // // 当鼠标悬停在父盒子上时，开始动画
         container.addEventListener("mouseout",function(e){
             autoPlay() 
         })

@@ -6,7 +6,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>轮播图练习</title>
     <link rel="stylesheet" href="./Carousel.css" />
-    <script src="./Carousel.js"></script>
 </head>
 
 <body>
@@ -17,10 +16,10 @@
             <div class="next"></div>
         </div>
         <ul class="list is-animating" style="height: 400px;">
-            <li>0<img src="../img1.image"></li>
-            <li>1<img src="../img2.image"></li>
-            <li>2<img src="../img3.image"></li>
-            <li>3<img src="../img4.image"></li>
+            <li>0<img src="../img1.jpeg"></li>
+            <li>1<img src="../img2.jpeg"></li>
+            <li>2<img src="../img3.jpeg"></li>
+            <li>3<img src="../img4.jpeg"></li>
         </ul>
         <ul class="dots">
             <li attr="0" class="active"></li>
@@ -44,7 +43,8 @@
         const dot = Array.from(dots.children)
         // 前后按钮集合
         const button = document.querySelector(".button")
-        let current = 0, max = listItem.length;
+        let current = 0, // 控制当前显示的是哪一个图片
+        max = listItem.length;
         // 存储圆点的状态
         const dotSelect = {
             preDot: dot[0],
@@ -124,28 +124,30 @@
                 handleDot(value)
             }
         })
-
+        let auto=true // 控制是否自动
         function autoPlay() {
-            if (intervalId) {
-                removeAnima()
+            if(!auto){
+                return
             }
-            intervalId = setInterval(() => {
+            intervalId=setTimeout(() => {
                 goNext()
+                autoPlay()
             }, interval);
         }
         autoPlay()
-
-        function removeAnima() {
-            clearInterval(intervalId)
-            intervalId = null
+        function stopWork(){
+            auto=false
+            clearTimeout(intervalId)
+            intervalId=null
         }
         const container = document.querySelector("#container")
         //  // 当鼠标悬停在父盒子上时，停止动画
         container.addEventListener("mouseover", function (e) {
-            removeAnima()
+            stopWork()
         })
         // // 当鼠标悬停在父盒子上时，开始动画
         container.addEventListener("mouseout", function (e) {
+            auto=true
             autoPlay()
         })
     </script>

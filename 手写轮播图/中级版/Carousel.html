@@ -95,6 +95,7 @@
             handleDot(current)
         }
         function onTranslateEnd() {// 在盒子 translate 到指定位置时触发
+//             理论上，只要是宏任务都可以
             setTimeout(() => {
                 lists.classList.add("is-animating")
                 translate(current)

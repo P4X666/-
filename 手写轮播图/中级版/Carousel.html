@@ -44,7 +44,7 @@
         // 前后按钮集合
         const button = document.querySelector(".button")
         let current = 0, // 控制当前显示的是哪一个图片
-        max = listItem.length;
+            max = listItem.length;
         // 存储圆点的状态
         const dotSelect = {
             preDot: dot[0],
@@ -71,10 +71,12 @@
             current++
             if (current > max) {
                 current = 1
-                lists.classList.remove("is-animating")
-                lists.style.transform = `translateX(${0}px)`;
+                requestAnimationFrame(function () {
+                    lists.classList.remove("is-animating")
+                    lists.style.transform = `translateX(${0}px)`;
+                    requestAnimationFrame(onTranslateEnd)
+                })
 
-                onTranslateEnd()
                 return
             }
             translate(current)
@@ -85,21 +87,23 @@
             current--
             if (current < 0) {
                 current = max - 1
-                lists.classList.remove("is-animating")
-                lists.style.transform = `translateX(${-max * width}px)`;
+                requestAnimationFrame(function () {
+                    lists.classList.remove("is-animating")
+                    lists.style.transform = `translateX(${-max * width}px)`;
+                    requestAnimationFrame(onTranslateEnd)
+                })
 
-                onTranslateEnd()
                 return
             }
             translate(current)
             handleDot(current)
         }
         function onTranslateEnd() {// 在盒子 translate 到指定位置时触发
-            requestAnimationFrame(() => {
-                lists.classList.add("is-animating")
-                translate(current)
-                handleDot(current)
-            })
+            // requestAnimationFrame(function(){
+            lists.classList.add("is-animating")
+            translate(current)
+            handleDot(current)
+            // })
         }
         function translate(current) {
             const left = -current * width
@@ -124,21 +128,21 @@
                 handleDot(value)
             }
         })
-        let auto=true // 控制是否自动
+        let auto = true // 控制是否自动
         function autoPlay() {
-            if(!auto){
+            if (!auto) {
                 return
             }
-            intervalId=setTimeout(() => {
+            intervalId = setTimeout(() => {
                 goNext()
                 autoPlay()
             }, interval);
         }
         autoPlay()
-        function stopWork(){
-            auto=false
+        function stopWork() {
+            auto = false
             clearTimeout(intervalId)
-            intervalId=null
+            intervalId = null
         }
         const container = document.querySelector("#container")
         //  // 当鼠标悬停在父盒子上时，停止动画
@@ -147,7 +151,7 @@
         })
         // // 当鼠标悬停在父盒子上时，开始动画
         container.addEventListener("mouseout", function (e) {
-            auto=true
+            auto = true
             autoPlay()
         })
     </script>

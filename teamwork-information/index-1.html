@@ -1,0 +1,125 @@
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <!-- <script src="https://unpkg.com/vue@next"></script> -->
+    <script src="https://unpkg.com/vue/dist/vue.js"></script>
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/element-ui/lib/theme-chalk/index.css"
+    />
+    <!-- 引入组件库 -->
+    <script src="https://unpkg.com/element-ui/lib/index.js"></script>
+  </head>
+  <body>
+    <div id="app">
+      <el-table :data="tableData" stripe style="width: 100%">
+        <el-table-column prop="name" label="姓名" width="180">
+          <template slot-scope="scope">
+            <el-input
+              v-model="scope.row.name "
+              placeholder="请输入内容"
+            ></el-input>
+          </template>
+        </el-table-column>
+        <el-table-column prop="date" label="离开日期" width="180">
+          <template slot-scope="scope">
+            <el-input
+              v-model="scope.row.date "
+              placeholder="请输入内容"
+            ></el-input>
+          </template>
+        </el-table-column>
+
+        <el-table-column prop="address" label="地址">
+          <template slot-scope="scope">
+            <el-input
+              v-model="scope.row.address "
+              placeholder="请输入内容"
+            ></el-input>
+          </template>
+        </el-table-column>
+        <el-table-column label="操作">
+          <template slot-scope="scope">
+            <el-button size="mini" @click="submit(scope.$index, scope.row)"
+              >提交</el-button
+            >
+          </template>
+        </el-table-column>
+      </el-table>
+    </div>
+    <script>
+      const uuid=+new Date
+      // 内网的话，将 127.0.0.1 改为自己的ip即可
+      const ws = new WebSocket("ws://127.0.0.1:3000");
+      ws.onopen = function () {
+        console.log("连接成功，姓名必填");
+        ws.send(
+          JSON.stringify({uuid})
+        );
+      };
+      ws.onmessage = function (data) {
+        data=data.data
+        if(data.uuid==uuid){
+          return
+        }
+        console.log(JSON.parse(data));
+        // localChat.push(JSON.parse(data.data));
+      };
+      function sendMessage({ name = "", date = "", address = "" }) {
+        console.log(name, date, address,uuid);
+        ws.send(
+          JSON.stringify({
+            uuid,
+            name,
+            date,
+            address,
+          })
+        );
+      }
+
+      new Vue({
+        el: "#app",
+        data() {
+          return {
+            tableData: [
+              {
+                date: "",
+                name: "zhao",
+                address: "",
+              },
+              {
+                date: "",
+                name: "qian",
+                address: "",
+              },
+              {
+                date: "",
+                name: "sun",
+                address: "",
+              },
+              {
+                date: "",
+                name: "li",
+                address: "",
+              },
+            ],
+          };
+        },
+        methods: {
+          submit($index, $row) {
+            console.log($index, $row);
+            for (const key in $row) {
+              if ($row.hasOwnProperty(key)) {
+                if (!$row[key]) {
+                  return;
+                }
+              }
+            }
+            sendMessage($row);
+          },
+        },
+      });
+    </script>
+  </body>
+</html>

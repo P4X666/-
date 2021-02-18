@@ -10,64 +10,118 @@
     />
     <!-- 引入组件库 -->
     <script src="https://unpkg.com/element-ui/lib/index.js"></script>
+    <!-- excel 导出相关 -->
+    <!-- <script
+      type="text/javascript"
+      src="./node_modules/xlsx/xlsx.mini.js"
+    ></script> -->
+
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.16.9/xlsx.core.min.js"
+      integrity="sha512-qcjxCpal2fC5XTlJBB6yc/T2g7Xuxd0uHz+syZZEByojMPnKXroczpN3vrxL3ifHx4RVy4Jj8jVkXseQ5irtWA=="
+      crossorigin="anonymous"
+    ></script>
   </head>
+
   <body>
     <div id="app">
-      <el-table :data="tableData" stripe style="width: 100%">
-        <el-table-column prop="name" label="姓名" width="180">
-          <template slot-scope="scope">
-            <el-input
-              v-model="scope.row.name "
-              placeholder="请输入内容"
-            ></el-input>
-          </template>
-        </el-table-column>
-        <el-table-column prop="date" label="离开日期" width="180">
-          <template slot-scope="scope">
-            <el-input
-              v-model="scope.row.date "
-              placeholder="请输入内容"
-            ></el-input>
-          </template>
-        </el-table-column>
+      <!-- 
 
-        <el-table-column prop="address" label="地址">
-          <template slot-scope="scope">
-            <el-input
-              v-model="scope.row.address "
-              placeholder="请输入内容"
-            ></el-input>
-          </template>
-        </el-table-column>
-        <el-table-column label="操作">
-          <template slot-scope="scope">
-            <el-button size="mini" @click="submit(scope.$index, scope.row)"
-              >提交</el-button
-            >
-          </template>
-        </el-table-column>
-      </el-table>
+        只有填写 工号 才能最终确认 uuid
+        根据 uuid 来分配权限，每个人只能填写自己的那一部分
+        全部填写完毕后断开链接，然后导出按钮可用（参考 vue-admin-template 中的导出
+
+       -->
+      <div>
+        <div v-if="startInput">
+          <div>请输入你的工号</div>
+          <el-input v-model="input" placeholder="请输入工号"></el-input>
+          <el-button @click="getUserInfor">确认</el-button>
+        </div>
+        <div v-else>
+          <el-table :data="tableData" stripe style="width: 100%">
+            <el-table-column prop="name" label="姓名" width="180">
+              <template slot-scope="scope">
+                <el-input
+                  v-model="scope.row.name "
+                  placeholder="请输入内容"
+                ></el-input>
+              </template>
+            </el-table-column>
+            <el-table-column prop="date" label="离开日期" width="180">
+              <template slot-scope="scope">
+                <el-input
+                  v-model="scope.row.date "
+                  placeholder="请输入内容"
+                ></el-input>
+              </template>
+            </el-table-column>
+
+            <el-table-column prop="address" label="地址">
+              <template slot-scope="scope">
+                <el-input
+                  v-model="scope.row.address "
+                  placeholder="请输入内容"
+                ></el-input>
+              </template>
+            </el-table-column>
+            <el-table-column label="操作">
+              <template slot-scope="scope">
+                <el-button size="mini" @click="submit(scope.$index, scope.row)"
+                  >提交</el-button
+                >
+              </template>
+            </el-table-column>
+          </el-table>
+          <el-button @click="exportExcel">导出</el-button>
+        </div>
+      </div>
     </div>
     <script>
-      const uuid=+new Date
+      function openDownloadDialog(url, saveName) {
+        if (typeof url == "object" && url instanceof Blob) {
+          url = URL.createObjectURL(url); // 创建blob地址
+        }
+        var aLink = document.createElement("a");
+        aLink.href = url;
+        aLink.download = saveName || "";
+        aLink.click();
+      }
+      function sheet2blob(sheet, sheetName) {
+        sheetName = sheetName || "sheet1";
+        var workbook = { SheetNames: [sheetName], Sheets: {} };
+        workbook.Sheets[sheetName] = sheet; // 生成excel的配置项
+        var wopts = {
+          bookType: "xlsx", // 要生成的文件类型
+          bookSST: false, // 是否生成Shared String Table，官方解释是，如果开启生成速度会下降，但在低版本IOS设备上有更好的兼容性
+          type: "binary",
+        };
+        var wbout = XLSX.write(workbook, wopts);
+        var blob = new Blob([s2ab(wbout)], {
+          type: "application/octet-stream",
+        }); // 字符串转ArrayBuffer
+        function s2ab(s) {
+          var buf = new ArrayBuffer(s.length);
+          var view = new Uint8Array(buf);
+          for (var i = 0; i != s.length; ++i) {
+            view[i] = s.charCodeAt(i) & 0xff;
+          }
+          return buf;
+        }
+        return blob;
+      }
+
+      const uuid = +new Date();
       // 内网的话，将 127.0.0.1 改为自己的ip即可
       const ws = new WebSocket("ws://127.0.0.1:3000");
-      ws.onopen = function () {
-        console.log("连接成功，姓名必填");
-        ws.send(
-          JSON.stringify({uuid})
-        );
-      };
-      ws.onmessage = function (data) {
-        data=data.data
-        if(data.uuid==uuid){
-          return
-        }
-        console.log(JSON.parse(data));
-        // localChat.push(JSON.parse(data.data));
-      };
+      function sendUuid(uuid) {
+        ws.onopen = function () {
+          console.log("连接成功");
+          ws.send(JSON.stringify({ uuid }));
+        };
+      }
+
       function sendMessage({ name = "", date = "", address = "" }) {
-        console.log(name, date, address,uuid);
         ws.send(
           JSON.stringify({
             uuid,
@@ -82,6 +136,8 @@
         el: "#app",
         data() {
           return {
+            input: "",
+            startInput:true,
             tableData: [
               {
                 date: "",
@@ -107,6 +163,16 @@
           };
         },
         methods: {
+          getUserInfor() {
+            sendUuid(this.input);
+          },
+          emitMessage() {
+            ws.onmessage = function (data) {
+              data = data.data;
+              console.log(JSON.parse(data));
+              // 当后端返回正确的用户名时，则进入信息填报
+            };
+          },
           submit($index, $row) {
             console.log($index, $row);
             for (const key in $row) {
@@ -118,8 +184,64 @@
             }
             sendMessage($row);
           },
+          exportExcel() {
+            let time = parseTime(new Date());
+
+            const aoa = [
+              ["姓名", "性别", "年龄", "注册时间"],
+              ["张三", "男", 18, time],
+              ["李四", "女", 22, time],
+            ];
+            const sheet = XLSX.utils.aoa_to_sheet(aoa);
+            openDownloadDialog(sheet2blob(sheet), "导出.xlsx");
+          },
         },
       });
+      // 时间解析
+      function parseTime(time, cFormat) {
+        if (!time) {
+          return null;
+        }
+        const format = cFormat || "{y}-{m}-{d} {h}:{i}:{s}";
+        let date;
+        if (typeof time === "object") {
+          date = time;
+        } else {
+          if (typeof time === "string") {
+            if (/^[0-9]+$/.test(time)) {
+              // support "1548221490638"
+              time = parseInt(time);
+            } else {
+              // support safari
+              // https://stackoverflow.com/questions/4310953/invalid-date-in-safari
+              time = time.replace(new RegExp(/-/gm), "/");
+            }
+          }
+
+          if (typeof time === "number" && time.toString().length === 10) {
+            time = time * 1000;
+          }
+          date = new Date(time);
+        }
+        const formatObj = {
+          y: date.getFullYear(),
+          m: date.getMonth() + 1,
+          d: date.getDate(),
+          h: date.getHours(),
+          i: date.getMinutes(),
+          s: date.getSeconds(),
+          a: date.getDay(),
+        };
+        const time_str = format.replace(/{([ymdhisa])+}/g, (result, key) => {
+          const value = formatObj[key];
+          // Note: getDay() returns 0 on Sunday
+          if (key === "a") {
+            return ["日", "一", "二", "三", "四", "五", "六"][value];
+          }
+          return value.toString().padStart(2, "0");
+        });
+        return time_str;
+      }
     </script>
   </body>
 </html>

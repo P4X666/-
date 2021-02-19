@@ -2,72 +2,73 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1.0" />
-    <!-- <script src="https://unpkg.com/vue@next"></script> -->
     <script src="https://unpkg.com/vue/dist/vue.js"></script>
     <link
       rel="stylesheet"
       href="https://unpkg.com/element-ui/lib/theme-chalk/index.css"
     />
-    <!-- 引入组件库 -->
     <script src="https://unpkg.com/element-ui/lib/index.js"></script>
-    <!-- excel 导出相关 -->
-    <!-- <script
-      type="text/javascript"
-      src="./node_modules/xlsx/xlsx.mini.js"
-    ></script> -->
 
     <script
       src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.16.9/xlsx.core.min.js"
       integrity="sha512-qcjxCpal2fC5XTlJBB6yc/T2g7Xuxd0uHz+syZZEByojMPnKXroczpN3vrxL3ifHx4RVy4Jj8jVkXseQ5irtWA=="
       crossorigin="anonymous"
     ></script>
+    <style>
+      .user-info {
+        margin-top: 200px;
+        text-align: center;
+      }
+      .user-info .el-input {
+        width: auto;
+      }
+    </style>
   </head>
 
   <body>
     <div id="app">
-      <!-- 
-
-        只有填写 工号 才能最终确认 uuid
-        根据 uuid 来分配权限，每个人只能填写自己的那一部分
-        全部填写完毕后断开链接，然后导出按钮可用（参考 vue-admin-template 中的导出
-
-       -->
       <div>
-        <div v-if="startInput">
-          <div>请输入你的工号</div>
+        <div v-if="startInput" class="user-info">
           <el-input v-model="input" placeholder="请输入工号"></el-input>
+          <el-button type="text" v-show="userName">{{userName}}</el-button>
           <el-button @click="getUserInfor">确认</el-button>
         </div>
         <div v-else>
           <el-table :data="tableData" stripe style="width: 100%">
+            <el-table-column prop="uuid" label="工号">
+              <template slot-scope="scope">
+                <el-input
+                  v-model="scope.row.uuid "
+                  placeholder="请输入内容"
+                  :disabled="true"
+                ></el-input>
+              </template>
+            </el-table-column>
             <el-table-column prop="name" label="姓名" width="180">
               <template slot-scope="scope">
                 <el-input
                   v-model="scope.row.name "
                   placeholder="请输入内容"
+                  :disabled="true"
                 ></el-input>
               </template>
             </el-table-column>
-            <el-table-column prop="date" label="离开日期" width="180">
+            <el-table-column prop="temp" label="体温" width="180">
               <template slot-scope="scope">
                 <el-input
-                  v-model="scope.row.date "
-                  placeholder="请输入内容"
+                  v-model="scope.row.temp"
+                  placeholder="请输入体温"
+                  :disabled="userId!==scope.row.uuid"
                 ></el-input>
               </template>
             </el-table-column>
 
-            <el-table-column prop="address" label="地址">
-              <template slot-scope="scope">
-                <el-input
-                  v-model="scope.row.address "
-                  placeholder="请输入内容"
-                ></el-input>
-              </template>
-            </el-table-column>
             <el-table-column label="操作">
               <template slot-scope="scope">
-                <el-button size="mini" @click="submit(scope.$index, scope.row)"
+                <el-button
+                  size="mini"
+                  @click="submit(scope.$index, scope.row)"
+                  v-if="userId===scope.row.uuid"
                   >提交</el-button
                 >
               </template>
@@ -78,6 +79,95 @@
       </div>
     </div>
     <script>
+      
+      let ws;
+      function sendUuid(uuid) {
+        ws.onopen = function () {
+          console.log("连接成功");
+          ws.send(JSON.stringify({ uuid }));
+        };
+      }
+
+      function sendMessage({ name = "", temp = "", uuid = "" }) {
+        ws.send(
+          JSON.stringify({
+            name,
+            temp,
+            uuid,
+          })
+        );
+      }
+
+      new Vue({
+        el: "#app",
+        data() {
+          return {
+            input: "",
+            startInput: true,
+            userName: "",
+            userId: "",
+            tableData: [],
+          };
+        },
+        methods: {
+          getUserInfor() {
+            // 内网的话，将 127.0.0.1 改为自己的ip即可
+            ws = new WebSocket("ws://127.0.0.1:3000");
+            this.uuid = `${this.input}-${+new Date()}`;
+            sendUuid(this.uuid);
+            this.emitMessage(ws);
+          },
+          emitMessage(ws) {
+            ws.onmessage = (data) => {
+              data = JSON.parse(data.data);
+              if (data.error) {
+                this.open();
+                return;
+              }
+              // 当后端返回正确的用户名时，则进入信息填报
+              this.userName = data[this.input];
+              this.userId = this.input;
+              this.tableData = data;
+              this.startInput = false;
+            };
+          },
+          submit($index, $row) {
+            console.log($index, $row);
+            for (const key in $row) {
+              if (!$row[key]) {
+                return;
+              }
+            }
+            const row = Object.assign({}, $row);
+            row.uuid = this.uuid;
+            sendMessage(row);
+          },
+          exportExcel() {
+            for (const iterator of this.tableData) {
+              if (!iterator.temp) {
+                return;
+              }
+            }
+            const excelData = [["工号", "姓名", "体温"]];
+
+            for (let i = 0; i < this.tableData.length; i++) {
+              const element = this.tableData[i];
+              if (!Array.isArray(excelData[i + 1])) {
+                excelData[i + 1] = [];
+              }
+              excelData[i + 1].push(element.uuid, element.name, element.temp);
+            }
+            const sheet = XLSX.utils.aoa_to_sheet(excelData);
+            openDownloadDialog(sheet2blob(sheet), "export.xlsx");
+          },
+          open() {
+            this.$alert("请重新输入工号或联系 pengpeng ", "未查到此人", {
+              confirmButtonText: "确定",
+              callback: () => window.location.reload(),
+            });
+          },
+        },
+      });
       function openDownloadDialog(url, saveName) {
         if (typeof url == "object" && url instanceof Blob) {
           url = URL.createObjectURL(url); // 创建blob地址
@@ -109,138 +199,6 @@
           return buf;
         }
         return blob;
-      }
-
-      const uuid = +new Date();
-      // 内网的话，将 127.0.0.1 改为自己的ip即可
-      const ws = new WebSocket("ws://127.0.0.1:3000");
-      function sendUuid(uuid) {
-        ws.onopen = function () {
-          console.log("连接成功");
-          ws.send(JSON.stringify({ uuid }));
-        };
-      }
-
-      function sendMessage({ name = "", date = "", address = "" }) {
-        ws.send(
-          JSON.stringify({
-            uuid,
-            name,
-            date,
-            address,
-          })
-        );
-      }
-
-      new Vue({
-        el: "#app",
-        data() {
-          return {
-            input: "",
-            startInput:true,
-            tableData: [
-              {
-                date: "",
-                name: "zhao",
-                address: "",
-              },
-              {
-                date: "",
-                name: "qian",
-                address: "",
-              },
-              {
-                date: "",
-                name: "sun",
-                address: "",
-              },
-              {
-                date: "",
-                name: "li",
-                address: "",
-              },
-            ],
-          };
-        },
-        methods: {
-          getUserInfor() {
-            sendUuid(this.input);
-          },
-          emitMessage() {
-            ws.onmessage = function (data) {
-              data = data.data;
-              console.log(JSON.parse(data));
-              // 当后端返回正确的用户名时，则进入信息填报
-            };
-          },
-          submit($index, $row) {
-            console.log($index, $row);
-            for (const key in $row) {
-              if ($row.hasOwnProperty(key)) {
-                if (!$row[key]) {
-                  return;
-                }
-              }
-            }
-            sendMessage($row);
-          },
-          exportExcel() {
-            let time = parseTime(new Date());
-
-            const aoa = [
-              ["姓名", "性别", "年龄", "注册时间"],
-              ["张三", "男", 18, time],
-              ["李四", "女", 22, time],
-            ];
-            const sheet = XLSX.utils.aoa_to_sheet(aoa);
-            openDownloadDialog(sheet2blob(sheet), "导出.xlsx");
-          },
-        },
-      });
-      // 时间解析
-      function parseTime(time, cFormat) {
-        if (!time) {
-          return null;
-        }
-        const format = cFormat || "{y}-{m}-{d} {h}:{i}:{s}";
-        let date;
-        if (typeof time === "object") {
-          date = time;
-        } else {
-          if (typeof time === "string") {
-            if (/^[0-9]+$/.test(time)) {
-              // support "1548221490638"
-              time = parseInt(time);
-            } else {
-              // support safari
-              // https://stackoverflow.com/questions/4310953/invalid-date-in-safari
-              time = time.replace(new RegExp(/-/gm), "/");
-            }
-          }
-
-          if (typeof time === "number" && time.toString().length === 10) {
-            time = time * 1000;
-          }
-          date = new Date(time);
-        }
-        const formatObj = {
-          y: date.getFullYear(),
-          m: date.getMonth() + 1,
-          d: date.getDate(),
-          h: date.getHours(),
-          i: date.getMinutes(),
-          s: date.getSeconds(),
-          a: date.getDay(),
-        };
-        const time_str = format.replace(/{([ymdhisa])+}/g, (result, key) => {
-          const value = formatObj[key];
-          // Note: getDay() returns 0 on Sunday
-          if (key === "a") {
-            return ["日", "一", "二", "三", "四", "五", "六"][value];
-          }
-          return value.toString().padStart(2, "0");
-        });
-        return time_str;
       }
     </script>
   </body>

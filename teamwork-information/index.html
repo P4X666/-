@@ -2,19 +2,12 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1.0" />
-    <!-- <script src="https://unpkg.com/vue@next"></script> -->
     <script src="https://unpkg.com/vue/dist/vue.js"></script>
     <link
       rel="stylesheet"
       href="https://unpkg.com/element-ui/lib/theme-chalk/index.css"
     />
-    <!-- 引入组件库 -->
     <script src="https://unpkg.com/element-ui/lib/index.js"></script>
-    <!-- excel 导出相关 -->
-    <!-- <script
-      type="text/javascript"
-      src="./node_modules/xlsx/xlsx.mini.js"
-    ></script> -->
 
     <script
       src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.16.9/xlsx.core.min.js"
@@ -86,25 +79,6 @@
       </div>
     </div>
     <script>
-      
-      let ws;
-      function sendUuid(uuid) {
-        ws.onopen = function () {
-          console.log("连接成功");
-          ws.send(JSON.stringify({ uuid }));
-        };
-      }
-
-      function sendMessage({ name = "", temp = "", uuid = "" }) {
-        ws.send(
-          JSON.stringify({
-            name,
-            temp,
-            uuid,
-          })
-        );
-      }
-
       new Vue({
         el: "#app",
         data() {
@@ -116,16 +90,19 @@
             tableData: [],
           };
         },
+        mounted() {
+          this.ws = null;
+        },
         methods: {
           getUserInfor() {
             // 内网的话，将 127.0.0.1 改为自己的ip即可
-            ws = new WebSocket("ws://127.0.0.1:3000");
+            this.ws = new WebSocket("ws://127.0.0.1:3000");
             this.uuid = `${this.input}-${+new Date()}`;
-            sendUuid(this.uuid);
-            this.emitMessage(ws);
+            this.sendUuid(this.uuid);
+            this.emitMessage();
           },
-          emitMessage(ws) {
-            ws.onmessage = (data) => {
+          emitMessage() {
+            this.ws.onmessage = (data) => {
               data = JSON.parse(data.data);
               if (data.error) {
                 this.open();
@@ -139,7 +116,6 @@
             };
           },
           submit($index, $row) {
-            console.log($index, $row);
             for (const key in $row) {
               if (!$row[key]) {
                 return;
@@ -147,7 +123,7 @@
             }
             const row = Object.assign({}, $row);
             row.uuid = this.uuid;
-            sendMessage(row);
+            this.sendMessage(row);
           },
           exportExcel() {
             for (const iterator of this.tableData) {
@@ -172,6 +148,22 @@
               confirmButtonText: "确定",
               callback: () => window.location.reload(),
             });
+          },
+          sendUuid(uuid) {
+            this.ws.onopen = () => {
+              console.log("连接成功");
+              this.ws.send(JSON.stringify({ uuid }));
+            };
+          },
+
+          sendMessage({ name = "", temp = "", uuid = "" }) {
+            this.ws.send(
+              JSON.stringify({
+                name,
+                temp,
+                uuid,
+              })
+            );
           },
         },
       });

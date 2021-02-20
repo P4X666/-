@@ -2,21 +2,21 @@ const ws = require("nodejs-websocket");
 
 const groupInfo = require("./groupInfo");
 
-const arr = {}; // 保留每个用户的 id，最好是以 工号+当前时间，因为每个用户在同一时间只会有一次操作
+const all_scoket = {}; // 保留每个用户的 id，最好是以 工号+当前时间，因为每个用户在同一时间只会有一次操作
 const server = ws
   .createServer(function (scoket) {
     scoket.on("text", function (str) {
       let data = JSON.parse(str);
       console.log(str);
-      if (arr[data.uuid]) {
+      if (all_scoket[data.uuid]) {
         for (const iterator of groupInfo) {
           if (iterator.uuid === data.uuid.split("-")[0]) {
             iterator.temp=data.temp
             break;
           }
         }
-        for (let item in arr) {
-          arr[item].sendText(
+        for (let item in all_scoket) {
+          all_scoket[item].sendText(
             JSON.stringify(groupInfo)
           );
         }
@@ -24,7 +24,7 @@ const server = ws
         for (const iterator of groupInfo) {
           if (iterator.uuid === data.uuid.split("-")[0]) {
             scoket.sendText(JSON.stringify(groupInfo));
-            arr[data.uuid] = scoket;
+            all_scoket[data.uuid] = scoket;
             return;
           }
         }

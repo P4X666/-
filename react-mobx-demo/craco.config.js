@@ -1,10 +1,5 @@
 module.exports = {
-  plugins: [
-    [
-      "@babel/plugin-proposal-decorators",
-      {
-        legacy: true,
-      },
-    ],
-  ],
+  babel: {
+    plugins: [["@babel/plugin-proposal-decorators", { legacy: true }]],
+  },
 };

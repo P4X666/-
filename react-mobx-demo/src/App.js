@@ -1,25 +1,22 @@
-import logo from './logo.svg';
-import './App.css';
 
-function App() {
+import { inject, observer } from 'mobx-react';
+import React from 'react';
+import './App.css';
+import TodoListView from './todoview';
+
+function App({ todolist }) {
+
+  const add = () => {
+    todolist.addTodo("第一个待办事项");
+  }
+
+  // todolist.addTodo("第二个待办事项")
   return (
     <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+      <TodoListView/>
+      <button onClick={add}>add</button>
     </div>
   );
 }
 
-export default App;
+export default inject('todolist')(observer(App));

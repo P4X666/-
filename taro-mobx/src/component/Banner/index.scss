@@ -1,0 +1,23 @@
+.banner {
+  height: 240px;
+  padding: 20px;
+  background-image: url(../../assets/banner.png);
+  background-size: contain;
+}
+.avatar{
+  margin-right: 15px;
+  font-size: 15px;
+}
+.avatar-label{
+  color: #fff;
+}
+@media screen and (-webkit-min-device-pixel-ratio: 2),
+  screen and (min--moz-device-pixel-ratio: 2) {
+
+  .banner {
+    height: 240px;
+    padding: 20px;
+    background-image: url(../../assets/banner@2x.png);
+    background-size: contain;
+  }
+}

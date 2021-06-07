@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>手写折叠面板</title>
+    <style>
+      .layout {
+        width: 100%;
+        height: 100%;
+      }
+      .collapse {
+        background-color: aqua;
+        /* transition: max-height 600ms; */
+        overflow: hidden;
+      }
+      .collapse-item {
+        background-color: bisque;
+        width: 300px;
+        height: 150px;
+      }
+      #control {
+        width: 150px;
+        height: 100px;
+      }
+      .folder{
+        max-height:800px;
+        animation:folder 0.8s 
+      }
+      .unfolder{
+        max-height:0px;
+        animation:unfolder 0.8s
+      }
+      @keyframes folder {
+        0% {
+          max-height:0px
+        }
+        100% {
+          max-height:800px
+        }
+      }
+      @keyframes unfolder {
+        0% {
+          max-height:800px
+        }
+        100% {
+          max-height:0px
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="layout">
+      <div id="collapse-parent" class="collapse">
+        <div class="collapse-item"></div>
+      </div>
+    </div>
+    <button id="control">展开</button>
+  </body>
+  <script>
+    const control = document.getElementById("control");
+    const collapse = document.querySelector(".collapse");
+
+    // 第一种写法 配合 transition 修改 maxHeight
+    // collapse.style.maxHeight='800px'
+
+    // control.onclick=e=>{
+    //   const text=e.target.innerText
+    //   e.target.innerText=text==='展开'?'收起':'展开'
+
+    //   const maxHeight=collapse.style.maxHeight
+    //   collapse.style.maxHeight=maxHeight==='800px'?'0px':'800px'
+    // }
+    // 第二种写法 配合 animation 增添 classsName
+    const parent = document.getElementById("collapse-parent");
+    control.onclick = (e) => {
+      const text = e.target.innerText;
+      e.target.innerText = text === "展开" ? "收起" : "展开";
+      
+      let className=parent.className
+      if(className.indexOf('unfolder')>-1){
+        parent.className=className.split(' ')[0]+=' folder'
+      }else if(className.indexOf('folder')>-1){
+        parent.className=className.split(' ')[0]+=' unfolder'
+      }else{
+        parent.className=className+=' unfolder'
+      }
+    };
+  </script>
+</html>

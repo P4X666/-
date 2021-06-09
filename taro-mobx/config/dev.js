@@ -5,5 +5,17 @@ module.exports = {
   defineConstants: {
   },
   mini: {},
-  h5: {}
+  h5: {
+    publicPath: '/',
+    devServer: {
+      host: 'localhost',
+      port: 9001,
+      proxy: {
+        '/': {
+          target: 'http://localhost:3000 ',
+          changeOrigin: true,
+        }
+      }
+    }
+  }
 };

@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>利用canvas绘制流程图</title>
+    <style>
+      * {
+        padding: 0;
+        margin: 0;
+      }
+    </style>
+    <script src="./utils.js"></script>
+    <script src="./data.js"></script>
+  </head>
+
+  <body>
+    <div id="processChartContain" style="position: relative">
+      <div id="canvas-demo"></div>
+    </div>
+
+    <script src="./new_canvas.js"></script>
+    <script>
+      Promise.resolve().then(() => {
+        const canvasParent = document.getElementById('canvas-demo');
+        const data = nodeChart.map((item) => {
+          item.map((ele) => {
+            let constent = '';
+            const dayNumber =
+              ele.dayNumber !== null ? `停留${ele.dayNumber}天` : '';
+            if (ele.status === '进行中') {
+              constent = `${ele.status}/n${dayNumber}`;
+            }
+            if (ele.status === '完成') {
+              constent = `经办人：${ele.agentName}/n${ele.createdTs}`;
+            }
+            if (ele.status === '跳过') {
+              constent = '已跳过该节点';
+            }
+            ele.describe = constent;
+            return ele;
+          });
+          return item;
+        });
+        const headNode = nodeChart[0][0];
+        nodeChart.forEach((element) => {
+          element.shift();
+        });
+        const config = {
+          startPosition: { x: 350, y: 100 },
+          headNode,
+          sourceData: data, // 需要渲染的源数据
+          hasDetail: true, // 是否有详情
+          isMove: false, // 是否支持画布拖动
+          nodeClick: (e) => {
+            console.log(e, 666666);
+          },
+        };
+        const flowChart = new DrawCanvas(canvasParent, config);
+        setTimeout(() => {
+          const newData = newNodeChart.map((item) => {
+            item.map((ele) => {
+              let constent = '';
+              const dayNumber =
+                ele.dayNumber !== null ? `停留${ele.dayNumber}天` : '';
+              if (ele.status === '进行中') {
+                constent = `${ele.status}/n${dayNumber}`;
+              }
+              if (ele.status === '完成') {
+                constent = `经办人：${ele.agentName}/n${ele.createdTs}`;
+              }
+              if (ele.status === '跳过') {
+                constent = '已跳过该节点/n';
+              }
+              ele.describe = constent;
+              return ele;
+            });
+            return item;
+          });
+          const headNode = newNodeChart[0][0];
+          newNodeChart.forEach((element) => {
+            element.shift();
+          });
+          const newConfig = {
+            startPosition: { x: 350, y: 100 },
+            headNode,
+            sourceData: newData, // 需要渲染的源数据
+            hasDetail: true, // 是否有详情
+            isMove: false, // 是否支持画布拖动
+            nodeClick: (node) => {
+              console.log(node, 666666);
+            },
+            nodeOver: (dom, node) => {
+              // 将tips的展示内容交给用户
+              console.log(node.describe);
+              dom.innerHTML = `<div style='color:red'>${node.describe}</div>`;
+            },
+          };
+          flowChart.update(newConfig);
+        }, 2000);
+
+      });
+    </script>
+  </body>
+</html>

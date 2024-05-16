@@ -1,0 +1,323 @@
+<html>
+
+<head>
+  <meta charset="utf-8" />
+  <title>canvas-event-system</title>
+</head>
+
+<body>
+  <canvas id="canvas" style="width: 500px; height: 350px; border: 1px solid #000;"></canvas>
+  <script>
+    function idToRgba(id) {
+      return id.split("-");
+    }
+
+    function rgbaToId(rgba) {
+      return rgba.join("-");
+    }
+
+    const idPool = {};
+    function createId() {
+      let id = createOnceId();
+
+      while (idPool[id]) {
+        id = createOnceId();
+      }
+
+      return id;
+    }
+
+    function createOnceId() {
+      return Array(3)
+        .fill(0)
+        .map(() => Math.ceil(Math.random() * 255))
+        .concat(255)
+        .join("-");
+    }
+
+  </script>
+  <script>
+
+    class Base {
+      listeners;
+      id;
+
+      constructor() {
+        this.id = createId();
+        this.listeners = {};
+      }
+
+      draw(ctx, osCtx) {
+        throw new Error("Method not implemented.");
+      }
+
+      on(eventName, listener) {
+        if (this.listeners[eventName]) {
+          this.listeners[eventName].push(listener);
+        } else {
+          this.listeners[eventName] = [listener];
+        }
+      }
+
+      getListeners() {
+        return this.listeners;
+      }
+
+      getId() {
+        return this.id;
+      }
+    }
+
+    class Circle extends Base {
+      constructor(props) {
+        super();
+        this.props = Object.assign(
+          { fillColor: "#fff", strokeColor: "#000", strokeWidth: 1 },
+          props
+        );
+      }
+
+      draw(ctx, osCtx) {
+        const { x, y, radius, strokeColor, strokeWidth, fillColor } = this.props;
+
+        ctx.save();
+        ctx.beginPath();
+        ctx.fillStyle = fillColor;
+        ctx.strokeStyle = strokeColor;
+        ctx.lineWidth = strokeWidth;
+        ctx.arc(x, y, radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        ctx.restore();
+
+        const [r, g, b, a] = idToRgba(this.id);
+
+        osCtx.save();
+        osCtx.beginPath();
+        osCtx.fillStyle = `rgba(${r}, ${g}, ${b}, ${a})`;
+        osCtx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${a})`;
+        osCtx.lineWidth = strokeWidth;
+        osCtx.arc(x, y, radius, 0, Math.PI * 2);
+        osCtx.fill();
+        osCtx.stroke();
+        osCtx.restore();
+      }
+    }
+
+    class Rect extends Base {
+      constructor(props) {
+        super();
+        this.props = Object.assign(
+          { fillColor: "#fff", strokeColor: "#000", strokeWidth: 1 },
+          props
+        );
+      }
+
+      draw(ctx, osCtx) {
+        const { x, y, width, height, strokeColor, strokeWidth, fillColor } =
+          this.props;
+
+        ctx.save();
+        ctx.beginPath();
+        ctx.strokeStyle = strokeColor;
+        ctx.lineWidth = strokeWidth;
+        ctx.fillStyle = fillColor;
+        ctx.rect(x, y, width, height);
+        ctx.fill();
+        ctx.stroke();
+        ctx.restore();
+
+        const [r, g, b, a] = idToRgba(this.id);
+
+        osCtx.save();
+        osCtx.beginPath();
+        osCtx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${a})`;
+        osCtx.fillStyle = `rgba(${r}, ${g}, ${b}, ${a})`;
+        osCtx.rect(x, y, width, height);
+        osCtx.fill();
+        osCtx.stroke();
+        osCtx.restore();
+      }
+    }
+
+  </script>
+  <script>
+    const ActionType = {
+      Down: 'DOWN',
+      Up: 'Up',
+      Move: 'MOVE',
+    }
+    const EventNames = {
+      click: "click",
+      mousedown: "mousedown",
+      mousemove: "mousemove",
+      mouseup: "mouseup",
+      mouseenter: "mouseenter",
+      mouseleave: "mouseleave",
+    };
+
+    class EventSimulator {
+      /**
+       * {string: {eventName: Listener[]}}
+       */
+      listenersMap = {};
+
+      lastDownId;
+      lastMoveId;
+
+      addAction(action, evt) {
+        const { type, id } = action;
+
+        // mousemove
+        if (type === ActionType.Move) {
+          this.fire(id, EventNames.mousemove, evt);
+        }
+
+        // mouseover
+        // mouseenter
+        if (type === ActionType.Move && (!this.lastMoveId || this.lastMoveId !== id)) {
+          this.fire(id, EventNames.mouseenter, evt);
+          this.fire(this.lastMoveId, EventNames.mouseleave, evt);
+        }
+
+        // mousedown
+        if (type === ActionType.Down) {
+          this.fire(id, EventNames.mousedown, evt);
+        }
+
+        // mouseup
+        if (type === ActionType.Up) {
+          this.fire(id, EventNames.mouseup, evt);
+        }
+
+        // click
+        if (type === ActionType.Up && this.lastDownId === id) {
+          this.fire(id, EventNames.click, evt);
+        }
+
+        if (type === ActionType.Move) {
+          this.lastMoveId = action.id;
+        } else if (type === ActionType.Down) {
+          this.lastDownId = action.id;
+        }
+      }
+
+      addListeners(
+        id,
+        listeners
+      ) {
+        this.listenersMap[id] = listeners;
+      }
+
+      fire(id, eventName, evt) {
+        if (this.listenersMap[id] && this.listenersMap[id][eventName]) {
+          this.listenersMap[id][eventName].forEach((listener) => listener(evt));
+        }
+      }
+    }
+
+  </script>
+  <script>
+    class Stage {
+      canvas;
+      osCanvas;
+      ctx;
+      osCtx;
+      dpr;
+      shapes;
+      eventSimulator;
+
+      constructor(canvas) {
+        const dpr = window.devicePixelRatio;
+        canvas.width = parseInt(canvas.style.width) * dpr;
+        canvas.height = parseInt(canvas.style.height) * dpr;
+
+        this.canvas = canvas;
+        this.osCanvas = new OffscreenCanvas(canvas.width, canvas.height);
+
+        this.ctx = this.canvas.getContext("2d");
+        this.osCtx = this.osCanvas.getContext("2d");
+
+        this.ctx.scale(dpr, dpr);
+        this.osCtx.scale(dpr, dpr);
+        this.dpr = dpr;
+
+        this.canvas.addEventListener(
+          "mousedown",
+          this.handleCreator(ActionType.Down)
+        );
+        this.canvas.addEventListener("mouseup", this.handleCreator(ActionType.Up));
+        this.canvas.addEventListener(
+          "mousemove",
+          this.handleCreator(ActionType.Move)
+        );
+
+        this.shapes = new Set();
+        this.eventSimulator = new EventSimulator();
+      }
+
+      add(shape) {
+        const id = shape.getId();
+        this.eventSimulator.addListeners(id, shape.getListeners());
+        this.shapes.add(id);
+
+        shape.draw(this.ctx, this.osCtx);
+      }
+
+      handleCreator = (actionType) => (evt) => {
+        const x = evt.offsetX;
+        const y = evt.offsetY;
+        const id = this.hitJudge(x, y);
+        this.eventSimulator.addAction({ type: actionType, id }, evt);
+      };
+
+      /**
+       * Determine whether the current position is inside a certain shape, if it is, then return its id
+       * @param x
+       * @param y
+       */
+      hitJudge(x, y) {
+        const rgba = Array.from(
+          this.osCtx.getImageData(x * this.dpr, y * this.dpr, 1, 1).data
+        );
+
+        const id = rgbaToId(rgba);
+        return this.shapes.has(id) ? id : undefined;
+      }
+    }
+
+  </script>
+  <script>
+    const canvas = document.querySelector('#canvas');
+    const stage = new Stage(canvas);
+
+    const rect = new Rect({
+      x: 50,
+      y: 50,
+      width: 250,
+      height: 175,
+      fillColor: 'green',
+    });
+
+    const circle = new Circle({
+      x: 200,
+      y: 200,
+      radius: 100,
+      fillColor: 'red',
+    });
+
+    rect.on(EventNames.mousedown, () => console.log('rect mousedown'));
+    rect.on(EventNames.mouseup, () => console.log('rect mouseup'));
+    rect.on(EventNames.mouseenter, () => console.log('rect mouseenter'));
+    rect.on(EventNames.click, () => console.log('rect click'));
+
+    circle.on(EventNames.click, () => console.log('circle click!!!'));
+    circle.on(EventNames.mouseleave, () => console.log('circle mouseleave!!!'));
+
+    stage.add(rect);
+    stage.add(circle);
+
+  </script>
+</body>
+
+</html>
